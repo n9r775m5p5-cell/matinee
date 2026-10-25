@@ -48,6 +48,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -322,13 +323,17 @@ private fun GridTile(
     val shape = RoundedCornerShape(TILE_RADIUS.dp)
     val active = focused || lifted
     val sheen = rememberFocusSheen(active)
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    val captionAlpha = animateFloatAsState(
+        targetValue = if (active) 1f else 0f,
+        animationSpec = if (LocalReduceMotion.current) snap() else tween(210),
+        label = "gridCaption",
+    )
+    Column(Modifier.zIndex(if (active) 1f else 0f), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .scaleBy(focusScale(active, if (lifted) 1.14f else 1.1f))
-                .shadow(if (active) 18.dp else 0.dp, shape)
+                .tvFocusMotion(active, if (lifted) 1.14f else 1.13f, if (lifted) 0.dp else 5.dp, 14.dp)
                 .clip(shape)
                 .background(if (cardTheme == CardTheme.LIGHT) CardLight else CardDark)
                 // Scale alone is too subtle from across the room, so focus also lights a bright rim and a sheen.
@@ -368,10 +373,14 @@ private fun GridTile(
         ) {
             CardArt(app, cardTheme)
         }
-        Box(Modifier.height(22.dp).padding(top = 7.dp), contentAlignment = Alignment.Center) {
-            if (active) {
-                BasicText(app.label, maxLines = 1, overflow = TextOverflow.Ellipsis, style = interStyle(11.sp, 600))
-            }
+        Box(
+            Modifier.height(22.dp).padding(top = 7.dp).graphicsLayer {
+                alpha = captionAlpha.value
+                translationY = (1f - captionAlpha.value) * 5.dp.toPx()
+            },
+            contentAlignment = Alignment.Center,
+        ) {
+            BasicText(app.label, maxLines = 1, overflow = TextOverflow.Ellipsis, style = interStyle(11.sp, 600))
         }
     }
 }
@@ -385,7 +394,7 @@ private fun AddTile(enabled: Boolean, isRowEnd: Boolean, onClick: () -> Unit) {
             Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .scaleBy(focusScale(focused, 1.1f))
+                .tvFocusMotion(focused, 1.1f, 4.dp, 14.dp)
                 .glass(shape, if (focused) GlassStyle.Lit else GlassStyle.Pill)
                 .blockRightExit(isRowEnd)
                 .onFocusChanged { focused = it.isFocused }
