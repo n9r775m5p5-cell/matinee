@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Test-only Matinee Fluid: keep Android's Play Protect enabled.
+  Internet-sideloaded APKs that declare ACCESSIBILITY and NOTIFICATION_LISTENER
+  capabilities are automatically blocked by Play Protect in supported markets.
+  Animations do not use either service, so remove them from only this debug build.
+  Trade-off: system Home-key interception and notification/last-played tracking
+  require the official Matinee distribution with those services enabled.
+  The original main/release manifest remains unchanged.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application android:label="Matinee Fluid" tools:replace="android:label">
+        <service
+            android:name="com.tcltv.sahne.system.HomeKeyService"
+            tools:node="remove" />
+        <service
+            android:name="com.tcltv.sahne.system.TvNotificationListener"
+            tools:node="remove" />
+    </application>
+</manifest>
