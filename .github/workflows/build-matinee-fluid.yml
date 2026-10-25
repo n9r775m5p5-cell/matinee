@@ -1,0 +1,91 @@
+name: Build Matinee Fluid APK
+
+on:
+  push:
+    branches:
+      - feature/apple-fluid-focus
+    paths:
+      - 'app/src/main/java/com/tcltv/sahne/ui/home/**'
+      - 'app/build.gradle.kts'
+      - '.github/workflows/build-matinee-fluid.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Android TV APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout custom Matinee
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK, NDK and CMake
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager --install "platforms;android-35" "build-tools;35.0.0" "ndk;29.0.14206865" "cmake;3.31.6"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/29.0.14206865" >> "$GITHUB_ENV"
+
+      - name: Cache Android OpenSSL native libraries
+        id: openssl-cache
+        uses: actions/cache@v4
+        with:
+          path: app/src/main/cpp/openssl
+          key: matinee-fluid-openssl-3.0.22-ndk29-v1
+
+      - name: Build Matinee AirPlay native OpenSSL dependency
+        if: steps.openssl-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/openssl-source"
+          curl -fL --retry 3 --retry-delay 3 \
+            "https://github.com/openssl/openssl/releases/download/openssl-3.0.22/openssl-3.0.22.tar.gz" \
+            -o "$RUNNER_TEMP/openssl-3.0.22.tar.gz"
+          tar -xzf "$RUNNER_TEMP/openssl-3.0.22.tar.gz" -C "$RUNNER_TEMP/openssl-source" --strip-components=1
+          bash scripts/build-openssl.sh "$RUNNER_TEMP/openssl-source"
+
+      - name: Compile installable Android TV APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace :app:assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/Matinee-Fluid-v1.apk"
+
+      - name: Preserve APK build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Matinee-Fluid-v1-APK
+          path: ${{ runner.temp }}/Matinee-Fluid-v1.apk
+          if-no-files-found: error
+
+      - name: Publish APK as a directly downloadable release
+        if: success() && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "matinee-fluid-v1-build-${{ github.run_number }}" \
+            "$RUNNER_TEMP/Matinee-Fluid-v1.apk#Matinee-Fluid-v1.apk" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Matinee Fluid v1 - Apple-like navigation" \
+            --notes "Custom debug-signed Xiaomi/Android TV launcher with smooth spring-based focus scale, lift, shadow and label transitions. Installed separately from official Matinee."
