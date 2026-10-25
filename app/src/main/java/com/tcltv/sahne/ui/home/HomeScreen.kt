@@ -612,7 +612,7 @@ private fun AppCard(
     val reduceMotion = LocalReduceMotion.current
     val accent = Color(app.accent)
     val shape = RoundedCornerShape(15.dp)
-    val captionAlpha = animateFloatAsState(if (focused) 1f else 0f, tween(if (reduceMotion) 0 else 200), label = "caption")
+    val captionAlpha = animateFloatAsState(if (focused || lifted) 1f else 0f, tween(if (reduceMotion) 0 else 210), label = "caption")
     // Kept as State and read in graphicsLayer, so these springs redraw the card without recomposing it.
     val tilt = animateFloatAsState(
         targetValue = if (editMode && !lifted) (if (index % 2 == 0) -1.4f else 1.1f) else 0f,
@@ -624,7 +624,7 @@ private fun AppCard(
 
     Column(
         Modifier
-            .zIndex(if (lifted) 1f else 0f)
+            .zIndex(if (lifted) 2f else if (focused) 1f else 0f)
             .bringIntoViewRequester(bringIntoView)
             .onSizeChanged { cardSize = it },
     ) {
@@ -640,7 +640,7 @@ private fun AppCard(
                         rotationZ = tilt.value
                         translationY = lift.value.toPx()
                     }
-                    .scaleBy(focusScale(focused || lifted, 1.17f))
+                    .tvFocusMotion(focused || lifted, 1.17f, if (lifted) 0.dp else 6.dp)
                     .padding(4.dp)
                     // Up from a card in edit mode lands on its own remove button, independent of layout geometry.
                     .focusProperties { if (showRemove) up = removeFocus }
@@ -710,7 +710,10 @@ private fun AppCard(
         }
         Spacer(Modifier.height(11.dp))
         Row(
-            Modifier.overflowWithoutWidth().graphicsLayer { alpha = if (isSelected || lifted) captionAlpha.value else 0f },
+            Modifier.overflowWithoutWidth().graphicsLayer {
+                alpha = captionAlpha.value
+                translationY = (1f - captionAlpha.value) * 5.dp.toPx()
+            },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BasicText(app.label, style = interStyle(11.sp, 700, if (editMode) Palette.TextPrimary else lerp(accent, Color.White, 0.45f)))
