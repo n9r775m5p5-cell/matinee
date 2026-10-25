@@ -127,7 +127,11 @@ private fun MenuPopup(onDismiss: () -> Unit, content: @Composable () -> Unit) {
         offset = IntOffset(0, offsetY),
         onDismissRequest = onDismiss,
         properties = PopupProperties(focusable = true),
-    ) { content() }
+    ) {
+        Box(Modifier.fluidEntrance(distanceY = 12.dp, fromScale = 0.95f)) {
+            content()
+        }
+    }
 }
 
 @Composable
@@ -401,6 +405,7 @@ private fun MenuRow(
     Row(
         modifier
             .fillMaxWidth()
+            .tvFocusMotion(focused, 1.035f, 1.dp, 9.dp)
             .clip(RoundedCornerShape(9.dp))
             .background(if (focused) Color.White.copy(alpha = 0.1f) else Color.Transparent)
             .border(1.dp, if (focused) Color.White.copy(alpha = 0.4f) else Color.Transparent, RoundedCornerShape(9.dp))
@@ -554,6 +559,7 @@ private fun NoticeRow(notice: Notice, modifier: Modifier, onClick: () -> Unit) {
     Row(
         modifier
             .fillMaxWidth()
+            .tvFocusMotion(focused, 1.035f, 1.dp, 9.dp)
             .clip(RoundedCornerShape(9.dp))
             .background(if (focused) Color.White.copy(alpha = 0.1f) else Color.Transparent)
             .border(1.dp, if (focused) Color.White.copy(alpha = 0.4f) else Color.Transparent, RoundedCornerShape(9.dp))

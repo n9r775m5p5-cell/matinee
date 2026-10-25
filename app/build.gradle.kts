@@ -48,8 +48,8 @@ android {
     buildTypes {
         // Keep the custom launcher separate from the official Play Store Matinee.
         debug {
-            applicationIdSuffix = ".fluid"
-            versionNameSuffix = "-fluid-v1"
+            applicationIdSuffix = ".fluidv2"
+            versionNameSuffix = "-fluid-v2"
         }
         release {
             isMinifyEnabled = true

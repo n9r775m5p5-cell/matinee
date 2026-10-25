@@ -134,12 +134,11 @@ internal fun GridHome(
     var focusRequest by remember { mutableStateOf(GridFocusRequest(null, 0)) }
     var showAddDialog by remember { mutableStateOf(false) }
     var shelfFocused by remember { mutableStateOf(true) }
-    var gridFocused by remember { mutableStateOf(true) }
     val listState = rememberLazyListState()
     // Read only in graphicsLayer and a derived flag, so the fade redraws the hero instead of recomposing the grid.
     val heroAlpha = animateFloatAsState(
         targetValue = if (shelfFocused) 1f else 0f,
-        animationSpec = if (LocalReduceMotion.current) snap() else tween(350),
+        animationSpec = if (LocalReduceMotion.current) snap() else tween(260),
         label = "heroAlpha",
     )
 
@@ -163,12 +162,11 @@ internal fun GridHome(
     // A moved card is recomposed at its new place (often in another row), so focus is handed to it once the order lands.
     LaunchedEffect(apps) { liftedPackage?.let(::requestFocus) }
     BackHandler(enabled = liftedPackage != null) { liftedPackage = null }
-    // Coming back up to the shelf restores the full hero; going down into the grid lifts the shelf under the top bar
-    // so the rows get the room the fading hero leaves. Focus on the top bar moves neither.
-    LaunchedEffect(shelfFocused, gridFocused) {
-        when {
-            shelfFocused -> listState.animateScrollToItem(0)
-            gridFocused && listState.firstVisibleItemIndex == 0 -> listState.animateScrollToItem(1)
+    // Focus-driven bring-into-view already animates DOWN through the grid.
+    // The previous explicit scroll competed with it and caused vertical stuttering.
+    LaunchedEffect(shelfFocused) {
+        if (shelfFocused && listState.firstVisibleItemIndex != 0) {
+            listState.animateScrollToItem(0)
         }
     }
 
@@ -215,7 +213,7 @@ internal fun GridHome(
         CompositionLocalProvider(LocalBringIntoViewSpec provides MinimalBringIntoView) {
             LazyColumn(
                 state = listState,
-                modifier = Modifier.fillMaxSize().padding(top = 80.dp).onFocusChanged { gridFocused = it.hasFocus },
+                modifier = Modifier.fillMaxSize().padding(top = 80.dp),
                 contentPadding = PaddingValues(start = GRID_SIDE.dp, end = GRID_SIDE.dp, top = 14.dp, bottom = 40.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {

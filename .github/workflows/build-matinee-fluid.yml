@@ -1,4 +1,4 @@
-name: Build Matinee Fluid APK
+name: Build Matinee Fluid v2 APK
 
 on:
   push:
@@ -7,6 +7,9 @@ on:
     paths:
       - 'app/src/main/java/com/tcltv/sahne/ui/home/**'
       - 'app/build.gradle.kts'
+      - 'app/src/main/java/com/tcltv/sahne/SahneApp.kt'
+      - 'app/src/main/java/com/tcltv/sahne/ui/settings/**'
+      - 'app/src/debug/AndroidManifest.xml'
       - '.github/workflows/build-matinee-fluid.yml'
   workflow_dispatch:
 
@@ -77,13 +80,13 @@ jobs:
           set -euo pipefail
           chmod +x gradlew
           ./gradlew --no-daemon --stacktrace :app:assembleDebug
-          cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/Matinee-Fluid-v1.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/Matinee-Fluid-v2.apk"
 
       - name: Preserve APK build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Matinee-Fluid-v1-APK
-          path: ${{ runner.temp }}/Matinee-Fluid-v1.apk
+          name: Matinee-Fluid-v2-APK
+          path: ${{ runner.temp }}/Matinee-Fluid-v2.apk
           if-no-files-found: error
 
       - name: Publish APK as a directly downloadable release
@@ -93,9 +96,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh release create "matinee-fluid-v1-build-${{ github.run_number }}" \
-            "$RUNNER_TEMP/Matinee-Fluid-v1.apk#Matinee-Fluid-v1.apk" \
+          gh release create "matinee-fluid-v2-build-${{ github.run_number }}" \
+            "$RUNNER_TEMP/Matinee-Fluid-v2.apk#Matinee-Fluid-v2.apk" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "Matinee Fluid v1 - Apple-like navigation" \
+            --title "Matinee Fluid v2 - Apple-like navigation" \
             --notes "Custom debug-signed Xiaomi/Android TV launcher with smooth spring-based focus scale, lift, shadow and label transitions. Installed separately from official Matinee."

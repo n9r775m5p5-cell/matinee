@@ -10,7 +10,7 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <application android:label="Matinee Fluid" tools:replace="android:label">
+    <application android:label="Matinee Fluid 2" tools:replace="android:label">
         <service
             android:name="com.tcltv.sahne.system.HomeKeyService"
             tools:node="remove" />

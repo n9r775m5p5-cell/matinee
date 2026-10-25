@@ -298,6 +298,7 @@ private fun MenuDialog(title: String, onDismiss: () -> Unit, content: @Composabl
         Column(
             Modifier
                 .width(300.dp)
+                .fluidEntrance(distanceY = 14.dp, fromScale = 0.965f)
                 .ignoreHeldOk()
                 .glass(RoundedCornerShape(28.dp), GlassStyle.Dense)
                 .padding(horizontal = 14.dp, vertical = 16.dp),
@@ -321,6 +322,7 @@ private fun MenuRow(label: String, modifier: Modifier = Modifier, onClick: () ->
         modifier
             .fillMaxWidth()
             .heightIn(min = 40.dp)
+            .tvFocusMotion(focused, 1.025f, 0.dp, 12.dp)
             .then(if (focused) Modifier.glass(CircleShape, GlassStyle.Bright) else Modifier)
             .onFocusChanged { focused = it.isFocused }
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick)

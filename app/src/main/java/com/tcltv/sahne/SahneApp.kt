@@ -1,6 +1,12 @@
 package com.tcltv.sahne
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -60,22 +66,35 @@ fun SahneApp(viewModel: LauncherViewModel, resumeTick: Int) {
                         }
                     },
             ) {
-                if (showSettings) {
-                    SettingsScreen(
-                        viewModel = viewModel,
-                        onClose = { showSettings = false },
-                        onEditApps = {
-                            showSettings = false
-                            editRequest++
-                        },
-                    )
-                } else {
-                    HomeScreen(
-                        viewModel = viewModel,
-                        resumeTick = resumeTick,
-                        editRequest = editRequest,
-                        onOpenSettings = ::openSettings,
-                    )
+                AnimatedContent(
+                    targetState = showSettings,
+                    modifier = Modifier.fillMaxSize(),
+                    transitionSpec = {
+                        val duration = if (settings.reduceMotion) 0 else 240
+                        (fadeIn(animationSpec = tween(duration)) +
+                            slideInHorizontally(animationSpec = tween(duration)) { width ->
+                                if (targetState) width / 22 else -width / 22
+                            }) togetherWith fadeOut(animationSpec = tween(if (settings.reduceMotion) 0 else 145))
+                    },
+                    label = "fluidHomeSettings",
+                ) { inSettings ->
+                    if (inSettings) {
+                        SettingsScreen(
+                            viewModel = viewModel,
+                            onClose = { showSettings = false },
+                            onEditApps = {
+                                showSettings = false
+                                editRequest++
+                            },
+                        )
+                    } else {
+                        HomeScreen(
+                            viewModel = viewModel,
+                            resumeTick = resumeTick,
+                            editRequest = editRequest,
+                            onOpenSettings = ::openSettings,
+                        )
+                    }
                 }
                 PinGate(viewModel.gate, settings.parental)
             }

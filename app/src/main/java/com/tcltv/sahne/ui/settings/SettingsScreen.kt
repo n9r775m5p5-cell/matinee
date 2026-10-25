@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -53,6 +54,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -109,6 +111,12 @@ import com.tcltv.sahne.data.InputDetection
 import com.tcltv.sahne.data.TemperatureUnit
 import com.tcltv.sahne.data.WallpaperKey
 import com.tcltv.sahne.ui.GlassStyle
+import com.tcltv.sahne.ui.LocalReduceMotion
+import com.tcltv.sahne.ui.home.fluidEntrance
+import com.tcltv.sahne.ui.home.tvFocusMotion
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import com.tcltv.sahne.ui.ImagePicker
 import com.tcltv.sahne.ui.KeyCap
 import com.tcltv.sahne.ui.Palette
@@ -227,6 +235,8 @@ fun SettingsScreen(viewModel: LauncherViewModel, onClose: () -> Unit, onEditApps
                 .glass(RoundedCornerShape(30.dp), GlassStyle.Panel)
                 .padding(start = 22.dp, end = 22.dp, top = 20.dp),
         ) {
+            key(section, subPage) {
+                Column(Modifier.fluidEntrance(distanceY = 8.dp, fromScale = 0.99f)) {
             val page = subPage
             PanelHeader(
                 title = when (page) {
@@ -253,6 +263,8 @@ fun SettingsScreen(viewModel: LauncherViewModel, onClose: () -> Unit, onEditApps
                 SubPage.Licenses -> LicensesPage(panelRequester)
                 SubPage.LockedApps -> LockedAppsPage(viewModel, panelRequester)
                 SubPage.Wallpaper -> WallpaperPage(viewModel, panelRequester)
+            }
+                }
             }
         }
 
@@ -310,6 +322,7 @@ private fun NavItem(
         Modifier
             .fillMaxWidth()
             .height(33.dp)
+            .tvFocusMotion(highlighted, 1.025f, 0.dp, 16.dp)
             .then(
                 when {
                     highlighted -> Modifier.glass(CircleShape, GlassStyle.Bright)
@@ -1088,6 +1101,7 @@ private fun FocusRow(onClick: () -> Unit, modifier: Modifier = Modifier, content
             modifier
                 .fillMaxWidth()
                 .heightIn(min = 46.dp)
+                .tvFocusMotion(focused, 1.015f, 0.dp, 16.dp)
                 .then(if (focused) Modifier.glass(RoundedCornerShape(16.dp), GlassStyle.Lit) else Modifier)
                 .onFocusChanged { focused = it.isFocused }
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick)
@@ -1121,6 +1135,11 @@ private fun ToggleRow(
 private fun ToggleRow(label: String, subtitle: String?, checked: Boolean, modifier: Modifier = Modifier, onToggle: (Boolean) -> Unit) {
     val on = stringResource(R.string.switch_on)
     val off = stringResource(R.string.switch_off)
+    val thumbOffset by animateDpAsState(
+        targetValue = if (checked) 18.dp else 0.dp,
+        animationSpec = if (LocalReduceMotion.current) snap() else tween(190),
+        label = "fluidToggle",
+    )
     FocusRow(
         onClick = { onToggle(!checked) },
         modifier = modifier.semantics {
@@ -1137,7 +1156,7 @@ private fun ToggleRow(label: String, subtitle: String?, checked: Boolean, modifi
                 .background(if (checked) Palette.ToggleOn else Color.White.copy(alpha = 0.2f), RoundedCornerShape(11.dp))
                 .padding(2.dp),
         ) {
-            Box(Modifier.size(18.dp).align(if (checked) Alignment.CenterEnd else Alignment.CenterStart).background(Color.White, CircleShape))
+            Box(Modifier.offset(x = thumbOffset).size(18.dp).align(Alignment.CenterStart).background(Color.White, CircleShape))
         }
     }
 }
@@ -1194,6 +1213,7 @@ private fun InfoRow(@StringRes label: Int, @StringRes subtitle: Int?, value: Str
             modifier
                 .fillMaxWidth()
                 .heightIn(min = 46.dp)
+                .tvFocusMotion(focused, 1.015f, 0.dp, 16.dp)
                 .then(if (focused) Modifier.glass(RoundedCornerShape(16.dp), GlassStyle.Lit) else Modifier)
                 .onFocusChanged { focused = it.isFocused }
                 .focusable()
